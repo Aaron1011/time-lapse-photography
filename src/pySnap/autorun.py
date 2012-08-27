@@ -1,11 +1,12 @@
 import time
-import sys
 import os
 import getpass
 USER = getpass.getuser()
 for i in range(1,8):
     if os.path.lexists("/dev/video" + str(i)):
         WEBCAM = "/dev/video" + str(i)
+
+daysofweek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 def seconds(num2=None):
     try:
@@ -300,7 +301,7 @@ def weekly(num2=None):
     while cont == False:
         try:
             choice = raw_input()
-            choice = int(selection)
+            choice = int(choice)
             if choice in range(1,8):
                 cont = True
             else:
@@ -312,24 +313,26 @@ def weekly(num2=None):
     num = raw_input("Please enter the time that you would like pySnap to take a picture at each day, in 24-hour format: ")
     while cont == False:
         try:
-            num = int(num[:2])
-            num = int(num[3:5])
+            num5 = int(num[:2])
+            num5 = int(num[3:5])
             cont = True
         except ValueError:
             num = raw_input("\nPlease enter a valid time: ")
     config = open("/home/" + USER + "/.pysnap.conf", "w")
-    config.write("\nWeekly=" + str(num + "," + time.strftime("%A")))
+    config.write("\nWeekly=" + str(num + "," + daysofweek[choice - 1]))
     config.close()
     print("Your selection has been saved in a configuration file at /home/" + USER + "/.pysnap.conf")
     print("Time lapse photograph has been started.")
-    print("A picture will be placed into the Photos folder every day at " + str(num))
+    print("A picture will be placed into the Photos folder every week at " + str(num))
     if os.path.lexists("Photos/Weekly") == False:
         os.mkdir("Photos/Weekly")
     picture = True
+    print daysofweek[choice-1]
     while True:
         try:
             currtime = time.strftime('%X')[:5]
-            if currtime == num and picture == True:
+            currday = time.strftime('%A')
+            if currtime == num and currday == daysofweek[choice - 1] and picture == True:
                 os.system("streamer -c " + WEBCAM + " -o ./Photos/Weekly/" + currtime + ".jpeg")
                 picture = False
             elif currtime != num:
@@ -361,7 +364,7 @@ def select(num):
 
 try:
     print("Welcome to pySnap! pySnap makes it easy to do time lapse photography using your webcam.")
-    print("\nThe following time and date have been detected from your computer: \n" + str(time.strftime('%X %x')))
+    print("\nThe following time and date has been detected from your computer: \n" + str(time.strftime('%X %x')))
     print("\nIf this is not correct, please exit the program now by pressing Control - C, and change your computer's time and date. Then, re-run this program.")
     if os.system("dpkg-query -l streamer > /dev/null 2>/dev/null") is not 0:
         print("The program streamer, which pySnap requires to run, has not been detected. Enter in your password to install streamer, or press Control - C to exit the program.")
