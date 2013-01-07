@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-import time, datetime
+import time
+import datetime
 import os
+import subprocess
 import getpass
 USER = getpass.getuser()
+PACKAGES = ["streamer"]
 
 class ConfigFileError:
     pass
@@ -163,7 +166,7 @@ def main():
         print("Welcome to pySnap! pySnap makes it easy to do time lapse photography using your webcam.")
         print("\nThe following time and date has been detected from your computer: \n" + str(time.strftime('%X %x')))
         print("\nIf this is not correct, please exit the program now by pressing Control - C, and change your computer's time and date. Then, re-run this program.")
-        if os.system("dpkg-query -l streamer > /dev/null 2>/dev/null") is not 0:
+        if subprocess.call(["which"] + [p for p in PACKAGES], stdout=subprocess.PIPE) is not 0:
             print("The program streamer, which pySnap requires to run, has not been detected. Enter in your password to install streamer, or press Control - C to exit the program.")
             if os.path.lexists("streamer.deb"):
                 os.system("sudo dpkg -i streamer.deb")
