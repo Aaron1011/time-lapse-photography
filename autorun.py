@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 import time
-import datetime
 import os
 import subprocess
 import getpass
 USER = getpass.getuser()
-PACKAGES = ["streamer"]
+PACKAGES = ["streamer", "mencoder"]
+
 
 class ConfigFileError:
     pass
+
 
 class PhotoTaker:
 
@@ -47,6 +48,10 @@ class PhotoTaker:
                         line2 = line.split("=")
                         if len(line2) == 2:
                             return line2[0], int(line2[1])
+
+    def takePicture(self, directory, currtime=str(time.strftime("%X"))):
+        subprocess.call(["streamer", "-c", self.WEBCAM, "-o", directory + currtime + ".jpeg"])
+
     def removeConfig(self):
         try:
             os.remove("/home" + self.USER + "/.pysnap.conf")
@@ -55,100 +60,93 @@ class PhotoTaker:
 
     def seconds(self, num):
         try:
-            if os.path.lexists("Photos/Seconds") == False:
+            if not os.path.lexists("Photos/Seconds"):
                 os.mkdir("Photos/Seconds")
             while True:
-                currtime = str(time.strftime('%X'))
-                os.system("streamer -c "  + self.WEBCAM + " -o ./Photos/Seconds/" + currtime + ".jpeg")
+                self.takePicture("./Photos/Seconds/")
                 time.sleep(float(num))
         except KeyboardInterrupt:
             print("\nGoodbye!")
             quit()
-                
-                    
+
     def minutes(self, num):
         try:
-            if os.path.lexists("Photos/Minutes") == False:
+            if not os.path.lexists("Photos/Minutes"):
                 os.mkdir("Photos/Minutes")
             num *= 60
             while True:
-                currtime = str(time.strftime('%X'))
-                os.system("streamer -c " + self.WEBCAM + " -o ./Photos/Minutes/" + currtime + ".jpeg")
+                self.takePicture("./Photos/Minutes/")
                 time.sleep(float(num))
 
         except KeyboardInterrupt:
             print("\nGoodbye!")
             quit()
+
     def hours(self, num=None):
-        if os.path.lexists("Photos/Hours") == False:
+        if not os.path.lexists("Photos/Hours"):
             os.mkdir("Photos/Hours")
-        num *= 60**2
+        num *= 60 ** 2
         while True:
             try:
-                currtime = str(time.strftime('%X'))
-                os.system("streamer -c "+ self.WEBCAM + " -o ./Photos/Hours/" + currtime + ".jpeg")
+                self.takePicture("./Photos/Hours/")
                 time.sleep(num)
             except KeyboardInterrupt:
                 print("\nGoodbye!")
                 quit()
-                
+
     def days(self, num=None):
-        if os.path.lexists("Photos/Weeks") == False:
+        if not os.path.lexists("Photos/Weeks"):
             os.mkdir("Photos/Weeks")
-        num *= 60**2*24
+        num *= 60 ** 2 * 24
         while True:
             try:
-                currtime = str(time.strftime('%X'))
-                os.system("streamer -c "+ self.WEBCAM + " -o ./Photos/Weeks/" + currtime + ".jpeg")
+                self.takePicture("./Photos/Days/")
                 time.sleep(num)
             except KeyboardInterrupt:
                 print("\nGoodbye!")
                 quit()
 
     def weeks(self, num=None):
-        if os.path.lexists("Photos/Weeks") == False:
+        if not os.path.lexists("Photos/Weeks"):
             os.mkdir("Photos/Weeks")
-        num *= 60**2*24*7
+        num *= 60 ** 2 * 24 * 7
         while True:
             try:
-                currtime = str(time.strftime('%X'))
-                os.system("streamer -c "+ self.WEBCAM + " -o ./Photos/Weeks/" + currtime + ".jpeg")
+                self.takePicture("./Photos/Weeks/")
                 time.sleep(num)
             except KeyboardInterrupt:
                 print("\nGoodbye!")
-                quit()            
+                quit()
 
-                  
     def daily(self, picturetime):
-        if os.path.lexists("Photos/Daily") == False:
+        if not os.path.lexists("Photos/Daily"):
             os.mkdir("Photos/Daily")
         while True:
             try:
                 currtime = time.strftime('%I:%M:%S %p')
                 if currtime == picturetime:
-                    os.system("streamer -d -c " + self.WEBCAM + " -o ./Photos/Daily/" + currtime + ".jpeg")
+                    self.takePicture("./Photos/Daily/", currtime=currtime)
                     time.sleep(5)
             except KeyboardInterrupt:
                 print("\nGoodbye!")
                 quit()
 
-
     def weekly(self, phototime, day):
-        if os.path.lexists("Photos/Weekly") == False:
+        if not os.path.lexists("Photos/Weekly"):
             os.mkdir("Photos/Weekly")
-        print day
         print self.daysofweek[day - 1]
         while True:
             try:
                 currtime = time.strftime('%I:%M:%S %p')
                 currday = time.strftime('%A')
                 if currtime == phototime and currday == self.daysofweek[day - 1]:
-                    os.system("streamer -c "+ self.WEBCAM + " -o ./Photos/Weekly/" + currtime + ".jpeg")
+                    self.takePicture("./Photos/Weekly/", currtime=currtime)
                     time.sleep(5)
 
             except KeyboardInterrupt:
                 print("\nGoodbye!")
                 quit()
+
 
 def getTime():
     while True:
@@ -169,20 +167,18 @@ def main():
         if subprocess.call(["which"] + [p for p in PACKAGES], stdout=subprocess.PIPE) is not 0:
             print("The program streamer, which pySnap requires to run, has not been detected. Enter in your password to install streamer, or press Control - C to exit the program.")
             if os.path.lexists("streamer.deb"):
-                os.system("sudo dpkg -i streamer.deb")
+                subprocess.call(["sudo", "dpkg", "-i", "streamer.deb"])
             else:
-                os.system("sudo apt-get install -y streamer")
-                    
+                subprocess.call(["sudo", "apt-get", "install", "-y", "streamer"])
+
         print("\n\n\nPress Enter to advance to the next page.")
         raw_input()
 
-
-
-        os.system('clear')
+        subprocess.call(['clear'])
 
         print("Press Control - C and any time to exit the program")
 
-        os.system('streamer -c /dev/video0 -b 16 -o test.jpeg > /dev/null 2> /dev/null')
+        subprocess.call('streamer -c /dev/video0 -b 16 -o test.jpeg > /dev/null 2> /dev/null'.split(' '))
 
         print("\n\n\nA test image has been taken using your webcam. Look in the location that autorun.py is located for a file named test.jpeg. If you do not see test.jpeg, or it does not contain an image, ensure that your webcam is connected and that it works properly with other programs.")
 
@@ -199,11 +195,11 @@ def main():
 
         cont = False
 
-        while cont == False:
+        while not cont:
             try:
                 selection = raw_input()
                 selection = int(selection)
-                if selection in range(1,8):
+                if selection in range(1, 8):
                     cont = True
                 else:
                     print("Please enter a number from 1 to 7")
@@ -212,7 +208,6 @@ def main():
                 print("Please enter a valid selection")
 
         action = PhotoTaker.getChoices()[selection - 1]
-
 
         if selection == 6:
             PhotoTaker().start(action, getTime())
@@ -230,7 +225,7 @@ def main():
             while True:
                 try:
                     choice = int(raw_input())
-                    if choice in range(1,8):
+                    if choice in range(1, 8):
                         break
                     else:
                         print("Please enter a number from 1 to 7: ")
@@ -248,7 +243,7 @@ def main():
                 except ValueError:
                     num = raw_input("Please enter a number: ")
             PhotoTaker().start(action, num)
-                
+
     except KeyboardInterrupt:
             print("\nGoodbye!")
 
