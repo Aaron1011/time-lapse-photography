@@ -49,7 +49,9 @@ class PhotoTaker:
                         if len(line2) == 2:
                             return line2[0], int(line2[1])
 
-    def takePicture(self, directory, currtime=str(time.strftime("%X"))):
+    def takePicture(self, directory, currtime=None):
+        if not currtime:
+            currtime = str(time.strftime("%X"))
         subprocess.call(["streamer", "-c", self.WEBCAM, "-o", directory + currtime + ".jpeg"])
 
     def removeConfig(self):
