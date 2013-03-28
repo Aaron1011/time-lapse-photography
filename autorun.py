@@ -3,6 +3,13 @@ import time
 import os
 import subprocess
 import getpass
+try:
+    import cv2
+except:
+    print "OpenCV, a computer vision library which pySnap requires to run, is not installed. Please visit http://opencv.org/ for installation instructions for your platform."
+    print "PySnap will now exit."
+    quit()
+
 USER = getpass.getuser()
 PACKAGES = ["streamer", "mencoder"]
 
@@ -17,7 +24,7 @@ class PhotoTaker:
         self.USER = getpass.getuser()
         for i in range(11):
             if os.path.lexists("/dev/video" + str(i)):
-                self.WEBCAM = "/dev/video" + str(i)
+                self.WEBCAM = cv2.VideoCapture(i)
                 break
         if not os.path.lexists("Photos"):
             os.mkdir("Photos")
@@ -52,7 +59,10 @@ class PhotoTaker:
     def takePicture(self, directory, currtime=None):
         if not currtime:
             currtime = str(time.strftime("%X"))
-        subprocess.call(["streamer", "-c", self.WEBCAM, "-o", directory + currtime + ".jpeg"])
+        rval, img = self.WEBCAM.read()
+        cv2.waitKey(20)
+        if rval:
+            cv2.imwrite(directory + currtime + '.jpeg', img)
 
     def removeConfig(self):
         try:
@@ -166,12 +176,6 @@ def main():
         print("Welcome to pySnap! pySnap makes it easy to do time lapse photography using your webcam.")
         print("\nThe following time and date has been detected from your computer: \n" + str(time.strftime('%X %x')))
         print("\nIf this is not correct, please exit the program now by pressing Control - C, and change your computer's time and date. Then, re-run this program.")
-        if subprocess.call(["which"] + [p for p in PACKAGES], stdout=subprocess.PIPE) is not 0:
-            print("The program streamer, which pySnap requires to run, has not been detected. Enter in your password to install streamer, or press Control - C to exit the program.")
-            if os.path.lexists("streamer.deb"):
-                subprocess.call(["sudo", "dpkg", "-i", "streamer.deb"])
-            else:
-                subprocess.call(["sudo", "apt-get", "install", "-y", "streamer"])
 
         print("\n\n\nPress Enter to advance to the next page.")
         raw_input()
@@ -180,7 +184,7 @@ def main():
 
         print("Press Control - C and any time to exit the program")
 
-        subprocess.call('streamer -c /dev/video0 -b 16 -o test.jpeg > /dev/null 2> /dev/null'.split(' '))
+        PhotoTaker().takePicture('./', 'test')
 
         print("\n\n\nA test image has been taken using your webcam. Look in the location that autorun.py is located for a file named test.jpeg. If you do not see test.jpeg, or it does not contain an image, ensure that your webcam is connected and that it works properly with other programs.")
 
