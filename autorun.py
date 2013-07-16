@@ -3,6 +3,9 @@ import time
 import os
 import subprocess
 import getpass
+import argparse
+import sys
+
 try:
     import cv2
 except:
@@ -172,6 +175,13 @@ def getTime():
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--indie', action='store_true', help='Run in IndieCity mode')
+    args = parser.parse_args()
+    if args.indie:
+        subprocess.Popen([os.environ["TERM"], "-e", sys.executable, os.path.abspath(__file__)]).wait()
+        quit()
+
     try:
         print("Welcome to pySnap! pySnap makes it easy to do time lapse photography using your webcam.")
         print("\nThe following time and date has been detected from your computer: \n" + str(time.strftime('%X %x')))
