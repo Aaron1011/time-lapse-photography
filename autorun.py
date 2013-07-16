@@ -6,16 +6,22 @@ import getpass
 import argparse
 import sys
 
+USER = getpass.getuser()
+PACKAGES = ["python-opencv", "mencoder"]
+
+def install_deps():
+    subprocess.Popen(["sudo", "apt-get", "install"] + PACKAGES).wait()
+
 try:
     import cv2
 except:
     print "OpenCV, a computer vision library which pySnap requires to run, is not installed. Please visit http://opencv.org/ for installation instructions for your platform."
-    print "PySnap will now exit."
-    quit()
-
-USER = getpass.getuser()
-PACKAGES = ["streamer", "mencoder"]
-
+    print "If you are running a Debian-based Linux distribution, pySnap can automatically install OpenCV for you"
+    if raw_input("Install OpenCV? [y/n]").lower() == 'y':
+        install_deps()
+    else:
+        print "PySnap will now exit."
+        quit()
 
 class ConfigFileError:
     pass
