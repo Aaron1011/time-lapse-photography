@@ -180,12 +180,18 @@ def getTime():
     return picturetime
 
 
+def use_indie():
+    TERM = os.environ.get("TERM")
+    if os.uname()[1] == 'raspberrypi':
+        TERM = 'lxterminal'
+    subprocess.Popen([TERM, "-e", sys.executable, os.path.abspath(__file__)]).wait()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--indie', action='store_true', help='Run in IndieCity mode')
     args = parser.parse_args()
     if args.indie:
-        subprocess.Popen([os.environ["TERM"], "-e", sys.executable, os.path.abspath(__file__)]).wait()
+        use_indie()
         quit()
 
     try:
