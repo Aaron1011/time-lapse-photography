@@ -2,6 +2,7 @@ import getpass
 import os
 import cv2
 import time
+import subprocess
 
 class PhotoTaker:
     daysofweek = ("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
