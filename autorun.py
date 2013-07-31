@@ -28,25 +28,29 @@ class ConfigFileError:
 
 
 class PhotoTaker:
+    daysofweek = ("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+    choices = ("Seconds", "Minutes", "Hours", "Days", "Weeks", "Daily", "Weekly")
 
-    def __init__(self):
+    def __init__(self, cm=False):
         self.USER = getpass.getuser()
-        for i in range(11):
-            if os.path.lexists("/dev/video" + str(i)):
-                self.WEBCAM = cv2.VideoCapture(i)
-                break
-        if not os.path.lexists("Photos"):
-            os.mkdir("Photos")
-        self.daysofweek = ("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-        self.choices = ("Seconds", "Minutes", "Hours", "Days", "Weeks", "Daily", "Weekly")
+        self.cm = cm
+        if cm:
+            self.WEBCAM = ['raspistill', '-o']
+        else:
+            for i in range(11):
+                if os.path.lexists("/dev/video" + str(i)):
+                    self.WEBCAM = cv2.VideoCapture(i)
+                    break
+            if not os.path.lexists("Photos"):
+                os.mkdir("Photos")
+            
+    @classmethod
+    def getChoices(klass):
+        return klass.choices
 
-    @staticmethod
-    def getChoices():
-        return PhotoTaker().choices
-
-    @staticmethod
-    def getDaysofWeek():
-        return PhotoTaker().daysofweek
+    @classmethod
+    def getDaysofWeek(klass):
+        return klass.daysofweek
 
     def start(self, action, interval, day=None):
         if day:
@@ -65,13 +69,25 @@ class PhotoTaker:
                         if len(line2) == 2:
                             return line2[0], int(line2[1])
 
-    def takePicture(self, directory, currtime=None):
+    def takePictureCV(self, directory, currtime=None):
         if not currtime:
             currtime = str(time.strftime("%X"))
         rval, img = self.WEBCAM.read()
         cv2.waitKey(20)
         if rval:
             cv2.imwrite(directory + currtime + '.jpeg', img)
+
+    def takePicture(self, *args):
+        if self.cm:
+            self.takePictureCmd(*args)
+        else:
+            self.takePictureCV(*args)
+
+    def takePictureCmd(self, directory, currtime=None):
+        if not currtime:
+            currtime = str(time.strftime("%X"))
+        fname = directory + currtime + '.jpeg'
+        subprocess.Popen(self.WEBCAM + [fname])
 
     def removeConfig(self):
         try:
@@ -180,10 +196,7 @@ def getTime():
     return picturetime
 
 
-def on_indie():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--indie', action='store_true', help='Run in IndieCity mode')
-    args = parser.parse_args()
+def on_indie(args):
     return not args.indie and not os.path.exists(os.path.join(os.path.join(os.path.abspath(os.path.dirname(__file__)), '.git')))
 
 def use_indie():
@@ -193,7 +206,13 @@ def use_indie():
     subprocess.Popen([TERM, "-e", sys.executable, os.path.abspath(__file__), '-i']).wait()
 
 def main():
-    if on_indie():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--indie', action='store_true', help='Run in IndieCity mode')
+    parser.add_argument('-cm', '--camera-module', action='store_true', help='Use Raspberry Pi camera module' )
+    args = parser.parse_args()
+    photo_taker = PhotoTaker(args.camera_module)
+
+    if on_indie(args):
         use_indie()
         quit()
 
@@ -209,7 +228,7 @@ def main():
 
         print("Press Control - C and any time to exit the program")
 
-        PhotoTaker().takePicture('./', 'test')
+        photo_taker.takePicture('./', 'test')
 
         print("\n\n\nA test image has been taken using your webcam. Look in the location that autorun.py is located for a file named test.jpeg. If you do not see test.jpeg, or it does not contain an image, ensure that your webcam is connected and that it works properly with other programs.")
 
@@ -238,10 +257,10 @@ def main():
             except ValueError:
                 print("Please enter a valid selection")
 
-        action = PhotoTaker.getChoices()[selection - 1]
+        action = photo_taker.getChoices()[selection - 1]
 
         if selection == 6:
-            PhotoTaker().start(action, getTime())
+            photo_taker.start(action, getTime())
 
         if selection == 7:
             print("\n1)\033[31mSunday\033[39m")
@@ -263,7 +282,7 @@ def main():
                 except ValueError:
                     print("Please enter a valid selection: ")
             phototime = getTime()
-            PhotoTaker().start(action, phototime, choice)
+            photo_taker.start(action, phototime, choice)
         else:
 
             num = raw_input("Please enter the interval, in " + action.lower() + ", that you would like pySnap to take a picture: ")
@@ -273,7 +292,7 @@ def main():
                     break
                 except ValueError:
                     num = raw_input("Please enter a number: ")
-            PhotoTaker().start(action, num)
+            photo_taker.start(action, num)
 
     except KeyboardInterrupt:
             print("\nGoodbye!")
